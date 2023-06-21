@@ -1,10 +1,7 @@
-import logging
 import ssl
 import sys
 import urllib
-from collections import defaultdict
 from copy import deepcopy
-from functools import partial
 from pathlib import Path
 from typing import Optional
 
@@ -15,13 +12,12 @@ import torch
 import torch_geometric
 import torch_geometric.data
 from rdkit import Chem
-from rdkit.Chem import AllChem
 from torch import Tensor
 from torch_geometric.graphgym import cfg
 from torch_geometric.graphgym.loader import create_dataset
-from torch_geometric.utils import is_undirected, to_undirected
 
-from graphgps.dataset.chienn_utils import get_circle_index
+from chienn.data.edge_graph import to_edge_graph
+from chienn.data.featurization import smiles_to_3d_mol
 from graphgps.dataset.dataloader import CustomDataLoader
 from model.datasets_samplers import SingleConformerBatchSampler
 from model.embedding_functions import embedConformerWithAllPaths
@@ -97,7 +93,7 @@ def get_custom_loader(dataset, sampler, batch_size, shuffle=True, dataframe=None
     Returns DataLoader with sampler from ChIRo repository. For each enantiomer in the batch, it randomly
     samples a conformer for that enantiomer and a conformer for its opposite enantiomer with the same 2D graph.
     """
-    n_neighbors_in_circle = len(cfg.chienn.message.embedding_names)
+    n_neighbors_in_circle = len(cfg.chienn.message.k_neighbors_embeddings_names)
     if sampler == 'single_conformer_sampler':
         single_conformer_dataframe = dataframe.groupby('ID').sample(1)
         sampler = SingleConformerBatchSampler(single_conformer_dataframe,
@@ -149,61 +145,6 @@ def convert_target_for_task(target: Tensor, task_type: str, scale_label: float =
     elif task_type == 'classification_multilabel':
         return target.float().view(1, -1)
     return target.long()
-
-
-class Molecule3DEmbedder:
-    """
-    Creates rdkit.Mol from a smiles and embeds it in 3D space. Performs some cleaning as data from Tox21 are rather toxic.
-    """
-
-    def __init__(self, max_number_of_atoms: int, max_number_of_attempts: int = 5000):
-        """
-        Args:
-            max_number_of_atoms: maximal number of atoms in a molecule. Molecules with more atoms will be omitted.
-            max_number_of_attempts: maximal number of attempts during the embedding.
-        """
-        self.max_number_of_atoms = max_number_of_atoms
-        self.max_number_of_attempts = max_number_of_attempts
-
-    def embed(self, smiles: str) -> Optional[Chem.Mol]:
-        """
-        Embeds the molecule in 3D space.
-        Args:
-            smiles: a smile representing molecule
-
-        Returns:
-            Embedded molecule.
-        """
-
-        # Back and forth conversion canonizes the SMILES. After the canonization, the biggest molecule
-        # is at the beginning.
-        mol = Chem.MolFromSmiles(smiles)
-        smiles = Chem.MolToSmiles(mol)
-        smiles = smiles.split('.')[0]
-        mol = Chem.MolFromSmiles(smiles)
-        if len(mol.GetAtoms()) > self.max_number_of_atoms:
-            logging.warning(f'Omitting molecule {smiles} as it contains more than {self.max_number_of_atoms} atoms.')
-            return None
-        if len(mol.GetAtoms()) == 0:
-            logging.warning(f'Omitting molecule {smiles} as it contains no atoms after desaltization.')
-            return None
-        mol = Chem.AddHs(mol)
-        res = AllChem.EmbedMolecule(mol, maxAttempts=self.max_number_of_attempts, randomSeed=0)
-        if res < 0:  # try to embed with different method
-            res = AllChem.EmbedMolecule(mol, useRandomCoords=True, maxAttempts=self.max_number_of_attempts,
-                                        randomSeed=0)
-        if res < 0:
-            logging.warning(f'Omitting molecule {smiles} as cannot be embedded in 3D space properly.')
-            return None
-        try:
-            AllChem.UFFOptimizeMolecule(mol)
-        except Exception as e:
-            logging.warning(
-                f"Omitting molecule {smiles} as cannot be properly optimized. "
-                f"The original error message was: {e}."
-            )
-            return None
-        return mol
 
 
 def get_ranking_accuracies(results_df, mode='>=', difference_threshold=0.001):
@@ -265,85 +206,6 @@ def get_ranking_accuracies(results_df, mode='>=', difference_threshold=0.001):
     return margins, np.array(top_1_margins), random_baseline_means, random_baseline_stds
 
 
-def to_edge_graph(data: torch_geometric.data.Data, remove_parallel: bool = False) -> torch_geometric.data.Data:
-    """
-    Converts the graph to a graph of edges. Every directed edge (a, b) with index i becomes a node (denoted with node')
-    with attribute of the form data.x[a] | data.edge_attr[i]. Then every node' (x, a) incoming to node a is connected
-    with node' (a, b) with directed edge'. For compatibility with GINE, edge_attr' of edge' (a, b) -> (b, c) are set
-    to data.edge_attr[j], where j is the index of edge (a, b).
-
-    Args:
-        data: torch geometric data with nodes attributes (x), edge attributes (edge_attr) and edge indices (edge_index)
-
-    Returns:
-        Graph of edges.
-    """
-
-    if not is_undirected(data.edge_index):
-        edge_index, edge_attr = to_undirected(edge_index=data.edge_index, edge_attr=data.edge_attr)
-    else:
-        edge_index, edge_attr = data.edge_index, data.edge_attr
-
-    new_nodes = []
-    new_nodes_to_idx = {}
-    for edge, edge_attr in zip(edge_index.T, edge_attr):
-        a, b = edge
-        a, b = a.item(), b.item()
-        a2b = torch.cat([data.x[a], edge_attr, data.x[b]])  # x_{i, j} = x'_i | e'_{i, j} | x'_j.
-        pos = torch.cat([data.pos[a], data.pos[b]])
-        new_nodes_to_idx[(a, b)] = len(new_nodes)
-        is_chiral = data.x[a, -5] == 0
-        new_nodes.append(
-            {'a': a, 'b': b, 'a_attr': data.x[a], 'node_attr': a2b, 'old_edge_attr': edge_attr, 'pos': pos,
-             'is_chiral': is_chiral})
-
-    in_nodes = defaultdict(list)
-    for i, node_dict in enumerate(new_nodes):
-        a, b = node_dict['a'], node_dict['b']
-        in_nodes[b].append({'node_idx': i, 'start_node_idx': a})
-
-    new_edges = []
-    for i, node_dict in enumerate(new_nodes):
-        a, b = node_dict['a'], node_dict['b']
-        ab_old_edge_attr = node_dict['old_edge_attr']
-        a_attr = node_dict['a_attr']
-        if remove_parallel:
-            a_in_nodes_indices = [d['node_idx'] for d in in_nodes[a] if d['start_node_idx'] != b]
-        else:
-            a_in_nodes_indices = [d['node_idx'] for d in in_nodes[a]]
-        for in_node_c in a_in_nodes_indices:
-            in_node = new_nodes[in_node_c]
-            ca_old_edge_attr = in_node['old_edge_attr']
-            # e_{(i, j), (j, k)} = e'_(i, j) | x'_j | e'_{k, j}:
-            edge_attr = torch.cat([ca_old_edge_attr, a_attr, ab_old_edge_attr])
-            new_edges.append({'edge': [in_node_c, i], 'edge_attr': edge_attr})
-
-    parallel_node_index = []
-    for node_dict in new_nodes:
-        a, b = node_dict['a'], node_dict['b']
-        parallel_idx = new_nodes_to_idx[(b, a)]
-        parallel_node_index.append(parallel_idx)
-
-    new_x = [d['node_attr'] for d in new_nodes]
-    new_pos = [d['pos'] for d in new_nodes]
-    chiral_mask = [d['is_chiral'] for d in new_nodes]
-    new_edge_index = [d['edge'] for d in new_edges]
-    new_edge_attr = [d['edge_attr'] for d in new_edges]
-    new_x = torch.stack(new_x)
-    new_pos = torch.stack(new_pos)
-    chiral_mask = torch.stack(chiral_mask).bool()
-    new_edge_index = torch.tensor(new_edge_index).T
-    new_edge_attr = torch.stack(new_edge_attr)
-    parallel_node_index = torch.tensor(parallel_node_index)
-
-    data = torch_geometric.data.Data(x=new_x, edge_index=new_edge_index, edge_attr=new_edge_attr, pos=new_pos)
-    data.parallel_node_index = parallel_node_index
-    data.ccw_circle_index = get_circle_index(data, clockwise=False)
-    data.cw_circle_index = get_circle_index(data, clockwise=True)
-    data.chiral_mask = chiral_mask
-    return data
-
-
 def mask_chiral_default(data: torch_geometric.data.Data) -> torch_geometric.data.Data:
     """
     Adapted from ChIRo.model.dataset_samplers. It simply masks chiral tags
@@ -398,13 +260,42 @@ def add_parity_atoms(data: torch_geometric.data.Data) -> torch_geometric.data.Da
 
 PRE_TRANSFORM_MAPPING = {
     'edge_graph': to_edge_graph,
-    'edge_graph_no_parallel': partial(to_edge_graph, remove_parallel=True),
     'add_parity_atoms': add_parity_atoms
 }
 
 CHIRAL_MASKING_MAPPING = {
     'default': mask_chiral_default,
     'edge_graph': mask_chiral_edge_graph,
-    'edge_graph_no_parallel': mask_chiral_edge_graph,
     'add_parity_atoms': mask_chiral_default
 }
+
+
+class Molecule3DEmbedder:
+    """
+    Creates rdkit.Mol from a smiles and embeds it in 3D space. Performs some cleaning as data from Tox21 are rather toxic.
+    """
+
+    def __init__(self, max_number_of_atoms: int, max_number_of_attempts: int = 5000):
+        """
+        Args:
+            max_number_of_atoms: maximal number of atoms in a molecule. Molecules with more atoms will be omitted.
+            max_number_of_attempts: maximal number of attempts during the embedding.
+        """
+        self.max_number_of_atoms = max_number_of_atoms
+        self.max_number_of_attempts = max_number_of_attempts
+
+    def embed(self, smiles: str) -> Optional[Chem.Mol]:
+        """
+        Embeds the molecule in 3D space.
+        Args:
+            smiles: a smile representing molecule
+
+        Returns:
+            Embedded molecule.
+        """
+
+        # Back and forth conversion canonizes the SMILES. After the canonization, the biggest molecule
+        # is at the beginning.
+        return smiles_to_3d_mol(smiles,
+                                max_number_of_atoms=self.max_number_of_atoms,
+                                max_number_of_attempts=self.max_number_of_attempts)

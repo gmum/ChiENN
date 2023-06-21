@@ -2,18 +2,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch_geometric
 import torch_geometric.nn as pygnn
 from performer_pytorch import SelfAttention
 from torch_geometric.data import Batch
 from torch_geometric.nn import Linear as Linear_pyg
 from torch_geometric.utils import to_dense_batch
 
-from graphgps.layer.chienn_layer import ChiENN
+from graphgps.layer.bigbird_layer import SingleBigBirdLayer
+from graphgps.layer.chienn_layer_wrapper import ChiENNLayerWrapper
 from graphgps.layer.gatedgcn_layer import GatedGCNLayer
 from graphgps.layer.gine_conv_layer import GINEConvESLapPE
-from graphgps.layer.bigbird_layer import SingleBigBirdLayer
-import submodules.GeometricTransformerMolecule.GeometricTransformer as gt
 
 
 class GPSLayer(nn.Module):
@@ -36,13 +34,13 @@ class GPSLayer(nn.Module):
 
         # Local message-passing model.
         if add_chienn_layer:
-            self.chienn_layer = ChiENN(dim_h, dim_h, dropout=0.0, n_heads=num_heads)
+            self.chienn_layer = ChiENNLayerWrapper(hidden_dim=dim_h, dropout=0.0)
         else:
             self.chienn_layer = None
         if local_gnn_type == 'None':
             self.local_model = None
         elif local_gnn_type == 'ChiENN':
-            self.local_model = ChiENN(dim_h, dim_h, dropout=dropout, n_heads=num_heads)
+            self.local_model = ChiENNLayerWrapper(hidden_dim=dim_h, dropout=dropout)
         elif local_gnn_type == 'GENConv':
             self.local_model = pygnn.GENConv(dim_h, dim_h)
         elif local_gnn_type == 'GINE':
@@ -102,8 +100,6 @@ class GPSLayer(nn.Module):
             bigbird_cfg.n_heads = num_heads
             bigbird_cfg.dropout = dropout
             self.self_attn = SingleBigBirdLayer(bigbird_cfg)
-        elif global_model_type == 'GeometricTransformer':
-            self.self_attn = gt.MultiHeadedAttention(d_model=dim_h, h=num_heads, dropout=self.attn_dropout)
         else:
             raise ValueError(f"Unsupported global x-former model: "
                              f"{global_model_type}")

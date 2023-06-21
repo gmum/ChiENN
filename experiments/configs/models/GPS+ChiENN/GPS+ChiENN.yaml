@@ -28,21 +28,16 @@ model:
   edge_decoding: dot
   graph_pooling: add
   hidden_dim: 64
-  add_chienn_layer: 'all'
+  add_chienn_layer: True
 chienn:
   message:
-    embedding_names: ['linear', 'linear', 'linear']
-    aggregation: 'add'
+    k_neighbors_embeddings_names: ['linear', 'linear', 'linear']
     final_embedding_name: 'ELU+linear'
-    single_direction: True
-    mask_by_in_degree: True
   aggregate:
     self_embedding_name: 'linear'
     parallel_embedding_name: 'linear'
-    aggregation: 'add'
-    embedding_name: 'identity'
-    final_embedding_name: 'ELU'
-    distinct_self: False
+    aggregation: 'sum'
+    post_aggregation_embedding_name: 'ELU'
 gt:
   layer_type: GINE+Transformer  # CustomGatedGCN+Performer
   layers: 5

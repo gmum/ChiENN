@@ -14,4 +14,4 @@ def dataset_cfg(cfg):
     # Method for coordinates selection in AtomDistance class
     cfg.model.coords_selection = "start"
 
-    cfg.model.add_chienn_layer = 'none'
+    cfg.model.add_chienn_layer = False

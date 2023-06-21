@@ -9,12 +9,13 @@ This module contains code for running experiments with ChiENN and baselines mode
 conda create -n chienn-experiments python=3.9
 conda activate chienn-experiments
 
+# Packages used also in the chienn module:
 conda install pytorch=1.10 torchvision torchaudio -c pytorch -c nvidia
 conda install pyg=2.0.4 -c pyg -c conda-forge
+conda install rdkit -c conda-forge
 
-# RDKit is required for OGB-LSC PCQM4Mv2 and datasets derived from it.  
-conda install openbabel fsspec rdkit -c conda-forge
-
+# Packages used only in the experiments module:
+conda install openbabel fsspec -c conda-forge
 pip install torchmetrics
 pip install performer-pytorch
 pip install ogb
