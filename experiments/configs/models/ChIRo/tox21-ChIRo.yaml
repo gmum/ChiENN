@@ -1,0 +1,8 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/ChIRo/ChIRo.yaml, configs/datasets/tox21.yaml]
+gnn:
+  dropout: 0.2
+  layers: 4
+model:
+  hidden_dim: 128
+optim:
+  base_lr: 0.001

@@ -1,0 +1,49 @@
+dataset:
+  node_encoder: True
+  node_encoder_name: LinearNode+LapPE
+  node_encoder_in_dim: 52
+  node_encoder_bn: False
+  edge_encoder: True
+  edge_encoder_name: LinearEdge
+  edge_encoder_in_dim: 14
+  edge_encoder_bn: False
+  chiral_tags: False
+posenc_LapPE:
+  enable: True
+  eigen:
+    laplacian_norm: sym
+    eigvec_norm: L2
+    max_freqs: 10
+  model: Transformer  # DeepSet
+  dim_pe: 8
+  layers: 2
+  n_heads: 4  # Only used when `posenc.model: Transformer`
+  raw_norm_type: none
+train:
+  mode: custom
+  batch_size: 32
+  eval_period: 1
+  ckpt_period: 100
+model:
+  type: SANTransformer
+  edge_decoding: dot
+  graph_pooling: add
+  hidden_dim: 64
+gt:
+  layers: 10
+  n_heads: 8
+  full_graph: True
+  gamma: 1e-5
+  dropout: 0.0
+  layer_norm: False
+  batch_norm: True
+  residual: True
+gnn:
+  head: san_graph
+  layers_pre_mp: 0
+  layers_post_mp: 3  # Not used when `gnn.head: san_graph`
+  batchnorm: True
+  act: relu
+  dropout: 0.0
+  agg: mean
+  normalize_adj: False

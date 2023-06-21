@@ -1,0 +1,27 @@
+{
+  "max_subset_size": 10000,
+  "base_config_path": "configs/models/Tetra_DMPNN/binding_rank-Tetra_DMPNN.yaml",
+  "params_grid": [
+      {
+        "gnn.layers": [2, 4, 6],
+        "model.hidden_dim": [300, 600, 900],
+        "gnn.dropout": [0.2],
+        "optim.base_lr": [1e-4]
+      },
+      {
+        "gnn.layers": ["@BestParam()"],
+        "model.hidden_dim": ["@BestParam()"],
+        "gnn.dropout": [0.0, 0.5],
+        "optim.base_lr": [1e-4]
+      },
+      {
+        "gnn.layers": ["@BestParam()"],
+        "model.hidden_dim": ["@BestParam()"],
+        "gnn.dropout": ["@BestParam()"],
+        "optim.base_lr": [1e-3, 1e-5]
+      }
+  ]
+}
+
+
+

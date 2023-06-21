@@ -1,0 +1,8 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/SAN/SAN.yaml, configs/datasets/tox21.yaml]
+gt:
+  dropout: 0.2
+  layers: 10
+model:
+  hidden_dim: 256
+optim:
+  base_lr: 0.0001

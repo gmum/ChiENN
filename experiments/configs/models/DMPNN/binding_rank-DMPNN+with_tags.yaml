@@ -1,0 +1,10 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/DMPNN/DMPNN.yaml, configs/datasets/binding_rank.yaml]
+dataset:
+  chiral_tags: True
+gnn:
+  dropout: 0.2
+  layers: 6
+model:
+  hidden_dim: 900
+optim:
+  base_lr: 0.0001

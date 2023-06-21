@@ -1,0 +1,8 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/GPS+ChiENN/GPS+ChiENN.yaml, configs/datasets/rs.yaml]
+gt:
+  dropout: 0.0
+  layers: 3
+model:
+  hidden_dim: 256
+optim:
+  base_lr: 0.0001

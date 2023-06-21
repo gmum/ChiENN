@@ -1,0 +1,11 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/SAN+ChiENN/SAN+ChiENN.yaml, configs/datasets/bace.yaml]
+train:
+  mode: custom
+  batch_size: 16
+gt:
+  dropout: 0.5
+  layers: 10
+model:
+  hidden_dim: 256
+optim:
+  base_lr: 0.0001

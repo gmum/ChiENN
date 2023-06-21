@@ -1,0 +1,8 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/Tetra_DMPNN/Tetra_DMPNN.yaml, configs/datasets/rs.yaml]
+gnn:
+  dropout: 0.2
+  layers: 2
+model:
+  hidden_dim: 300
+optim:
+  base_lr: 0.0001

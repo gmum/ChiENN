@@ -1,0 +1,17 @@
+metric_best: mae
+metric_agg: argmin
+dataset:
+  format: ChIRo
+  name: binding_affinity
+  task: graph
+  task_type: regression
+  single_conformer: True
+  single_enantiomer: False
+train:
+  sampler: full_batch
+val:
+  sampler: full_batch
+test:
+  sampler: full_batch
+model:
+  loss_fun: l1

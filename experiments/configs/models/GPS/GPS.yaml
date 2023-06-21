@@ -1,0 +1,46 @@
+# parameters mainly taken from zinc-GPS+RWSE.yaml
+dataset:
+  chiral_tags: False
+  transductive: False
+  node_encoder: True
+  node_encoder_name: LinearNode+RWSE
+  node_encoder_in_dim: 52
+  node_encoder_bn: False
+  edge_encoder: True
+  edge_encoder_name: LinearEdge
+  edge_encoder_in_dim: 14
+  edge_encoder_bn: False
+posenc_RWSE:
+  enable: True
+  kernel:
+    times_func: range(1,21)
+  model: Linear
+  dim_pe: 28
+  raw_norm_type: BatchNorm
+train:
+  mode: custom
+  batch_size: 32
+  eval_period: 1
+  ckpt_period: 100
+model:
+  type: GPSModel
+  edge_decoding: dot
+  graph_pooling: add
+  hidden_dim: 64
+gt:
+  layer_type: GINE+Transformer  # CustomGatedGCN+Performer
+  layers: 10
+  n_heads: 4
+  dropout: 0.0
+  attn_dropout: 0.5
+  layer_norm: False
+  batch_norm: True
+gnn:
+  head: san_graph
+  layers_pre_mp: 0
+  layers_post_mp: 3  # Not used when `gnn.head: san_graph`
+  batchnorm: True
+  act: relu
+  dropout: 0.0
+  agg: mean
+  normalize_adj: False

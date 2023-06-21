@@ -1,0 +1,17 @@
+metric_best: accuracy
+metric_agg: argmax
+dataset:
+  format: ChIRo
+  name: RS
+  task: graph
+  task_type: classification
+  single_conformer: True
+train:
+  sampler: single_conformer_sampler
+val:
+  sampler: full_batch
+test:
+  sampler: full_batch # it is consistent with ChIRo evaluation method on RS when dataset.single_conformer=False.
+model:
+  loss_fun: cross_entropy
+

@@ -1,0 +1,15 @@
+metric_best: auc
+metric_agg: argmax
+dataset:
+  format: ChIRo-CSV
+  name: BACE
+  task: graph
+  task_type: classification
+train:
+  sampler: full_batch
+val:
+  sampler: full_batch
+test:
+  sampler: full_batch
+model:
+  loss_fun: cross_entropy

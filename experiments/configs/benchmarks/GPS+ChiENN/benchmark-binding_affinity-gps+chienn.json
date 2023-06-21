@@ -1,0 +1,27 @@
+{
+  "max_subset_size": 10000,
+  "base_config_path": "configs/models/GPS+ChiENN/binding_affinity-GPS+ChiENN.yaml",
+  "params_grid": [
+      {
+        "gt.layers": [3, 6, 10],
+        "model.hidden_dim": [64, 128, 256],
+        "gt.dropout": [0.2],
+        "optim.base_lr": [1e-4]
+      },
+      {
+        "gt.layers": ["@BestParam()"],
+        "model.hidden_dim": ["@BestParam()"],
+        "gt.dropout": [0.0, 0.5],
+        "optim.base_lr": [1e-4]
+      },
+      {
+        "gt.layers": ["@BestParam()"],
+        "model.hidden_dim": ["@BestParam()"],
+        "gt.dropout": ["@BestParam()"],
+        "optim.base_lr": [1e-3, 1e-5]
+      }
+  ]
+}
+
+
+

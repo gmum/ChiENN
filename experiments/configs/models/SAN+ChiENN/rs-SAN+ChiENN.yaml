@@ -1,0 +1,9 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/SAN+ChiENN/SAN+ChiENN.yaml, configs/datasets/rs.yaml]
+gt:
+  dropout: 0.2
+  layers: 6
+model:
+  hidden_dim: 256
+optim:
+  base_lr: 0.0001
+

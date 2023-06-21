@@ -1,0 +1,11 @@
+dataset:
+  node_encoder_in_dim: 52
+  edge_encoder_in_dim: 14
+  chiral_tags: False
+model:
+  type: ChIRo
+  config_path: "configs/models/ChIRo/ChIRo.json"
+  hidden_dim: 64
+gnn:
+  layers: 3
+  dropout: 0.0

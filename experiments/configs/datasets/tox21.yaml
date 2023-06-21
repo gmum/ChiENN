@@ -1,0 +1,17 @@
+metric_best: auc
+metric_agg: argmax
+dataset:
+  format: ChIRo-CSV
+  name: Tox21
+  task: graph
+  task_type: classification_multilabel
+share:
+  dim_out: 12 # it cannot be 2, because it will be changed in torchgeometric xd
+train:
+  sampler: full_batch
+val:
+  sampler: full_batch
+test:
+  sampler: full_batch
+model:
+  loss_fun: cross_entropy

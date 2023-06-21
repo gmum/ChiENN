@@ -1,0 +1,27 @@
+{
+  "max_subset_size": 10000,
+  "base_config_path": "configs/models/ChIRo/tox21-ChIRo.yaml",
+  "params_grid": [
+      {
+        "gnn.layers": [2, 3, 4],
+        "model.hidden_dim": [64, 128, 256],
+        "gnn.dropout": [0.2],
+        "optim.base_lr": [1e-4]
+      },
+      {
+        "gnn.layers": ["@BestParam()"],
+        "model.hidden_dim": ["@BestParam()"],
+        "gnn.dropout": [0.0, 0.5],
+        "optim.base_lr": [1e-4]
+      },
+      {
+        "gnn.layers": ["@BestParam()"],
+        "model.hidden_dim": ["@BestParam()"],
+        "gnn.dropout": ["@BestParam()"],
+        "optim.base_lr": [1e-3, 1e-5]
+      }
+  ]
+}
+
+
+

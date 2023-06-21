@@ -1,0 +1,8 @@
+additional_cfg_files: [configs/models/common.yaml, configs/models/ChIRo/ChIRo.yaml, configs/datasets/rs.yaml]
+gnn:
+  dropout: 0.0
+  layers: 2
+model:
+  hidden_dim: 64
+optim:
+  base_lr: 0.001

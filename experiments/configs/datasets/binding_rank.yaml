@@ -1,0 +1,17 @@
+metric_best: ranking_accuracy_0.3 # it was reported in the ChIRo paper
+metric_agg: argmax
+dataset:
+  format: ChIRo
+  name: binding_affinity
+  task: graph
+  task_type: regression_rank
+  single_conformer: True
+  single_enantiomer: False
+train:
+  sampler: single_conformer_sampler
+val:
+  sampler: full_batch
+test:
+  sampler: full_batch # it is consistent with ChIRo evaluation method on RS when dataset.single_conformer=False.
+model:
+  loss_fun: l1
