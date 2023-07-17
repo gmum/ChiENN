@@ -5,8 +5,10 @@ from scipy.spatial.transform import Rotation
 from torch_geometric.data import Data
 
 
-def get_circle_index(data: Data, clockwise: bool = False, ignore_parallel_node: bool = True) -> List[List[int]]:
+def get_circle_index(data: Data, clockwise: bool = False) -> List[List[int]]:
     """
+    Gets a list of indices for every node in data.
+
     For every node `i`, we create a `circle_i` - list of nodes sorted such that their order corresponds to a real
     3D circle around node `i`. If we imagine node `i` (which represents a directed edge) pointing towards us
     ([0, 0, -1]), then the incoming nodes are sorted counterclockwise (or clockwise if `clockwise` flag is set to True)
@@ -24,8 +26,7 @@ def get_circle_index(data: Data, clockwise: bool = False, ignore_parallel_node: 
     circle_index_list = []
     for i in range(len(data.x)):
         in_nodes = data.edge_index[0, data.edge_index[1, :] == i]
-        if ignore_parallel_node:
-            in_nodes = in_nodes[in_nodes != data.parallel_node_index[i]]
+        in_nodes = in_nodes[in_nodes != data.parallel_node_index[i]]
         if len(in_nodes) == 0:
             circle_index_list.append([])
             continue
@@ -110,6 +111,12 @@ def transform_vectors_to_base(base: np.array, vectors: np.array) -> np.array:
 def angle_2d(a: np.array, b: np.array) -> np.array:
     """
     Computes angle from 2D vector a to b in a standard (counterclockwise) direction.
+
+    Args:
+        a: a 2D vector of shape (2,).
+        b: a 2D vector of shape (2,).
+    Returns:
+        Angle in radians.
     """
     if a.shape != b.shape or a.shape != (2,):
         raise ValueError('You must provide 2D vectors!')

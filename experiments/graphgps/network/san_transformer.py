@@ -4,7 +4,7 @@ from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.models.gnn import FeatureEncoder, GNNPreMP
 from torch_geometric.graphgym.register import register_network
 
-from graphgps.layer.chienn_layer import ChiENN
+from graphgps.layer.chienn_layer_wrapper import ChiENNLayerWrapper
 from graphgps.layer.san_layer import SANLayer
 from graphgps.layer.san2_layer import SAN2Layer
 
@@ -34,14 +34,6 @@ class SANTransformer(torch.nn.Module):
         }.get(cfg.gt.layer_type)
         layers = []
         for i in range(cfg.gt.layers):
-            if cfg.model.add_chienn_layer == 'first':
-                add_chienn_layer = i == 0
-            elif cfg.model.add_chienn_layer == 'all':
-                add_chienn_layer = True
-            elif cfg.model.add_chienn_layer == 'none':
-                add_chienn_layer = False
-            else:
-                raise NotImplementedError()
             layers.append(Layer(gamma=cfg.gt.gamma,
                                 in_dim=cfg.gt.dim_hidden,
                                 out_dim=cfg.gt.dim_hidden,
@@ -52,12 +44,10 @@ class SANTransformer(torch.nn.Module):
                                 layer_norm=cfg.gt.layer_norm,
                                 batch_norm=cfg.gt.batch_norm,
                                 residual=cfg.gt.residual))
-            if add_chienn_layer:
-                layers.append(ChiENN(
-                    cfg.model.hidden_dim,
-                    cfg.model.hidden_dim,
+            if cfg.model.add_chienn_layer:
+                layers.append(ChiENNLayerWrapper(
+                    hidden_dim=cfg.model.hidden_dim,
                     dropout=0.0,
-                    n_heads=cfg.gt.n_heads,
                     return_batch=True))
         self.trf_layers = torch.nn.Sequential(*layers)
 

@@ -25,6 +25,7 @@ class FeatureEncoder(torch.nn.Module):
             # Encode integer node features via nn.Embeddings
             NodeEncoder = register.node_encoder_dict[
                 cfg.dataset.node_encoder_name]
+
             self.node_encoder = NodeEncoder(cfg.gnn.dim_inner)
             if cfg.dataset.node_encoder_bn:
                 self.node_encoder_bn = BatchNorm1dNode(
@@ -77,14 +78,6 @@ class GPSModel(torch.nn.Module):
         layers = []
 
         for i in range(cfg.gt.layers):
-            if cfg.model.add_chienn_layer == 'first':
-                add_chienn_layer = i == 0
-            elif cfg.model.add_chienn_layer == 'all':
-                add_chienn_layer = True
-            elif cfg.model.add_chienn_layer == 'none':
-                add_chienn_layer = False
-            else:
-                raise NotImplementedError()
             layers.append(GPSLayer(
                 dim_h=cfg.gt.dim_hidden,
                 local_gnn_type=local_gnn_type,
@@ -97,7 +90,7 @@ class GPSModel(torch.nn.Module):
                 layer_norm=cfg.gt.layer_norm,
                 batch_norm=cfg.gt.batch_norm,
                 bigbird_cfg=cfg.gt.bigbird,
-                add_chienn_layer=add_chienn_layer
+                add_chienn_layer=cfg.model.add_chienn_layer,
             ))
         self.layers = torch.nn.Sequential(*layers)
 

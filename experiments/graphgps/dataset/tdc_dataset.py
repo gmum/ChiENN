@@ -8,7 +8,7 @@ from torch_geometric.graphgym import cfg
 from tqdm import tqdm
 
 from graphgps.dataset.chiral_dataset_base import ChiralDatasetBase
-from graphgps.dataset.utils import get_chiro_data_from_mol, Molecule3DEmbedder, convert_target_for_task
+from graphgps.dataset.utils import get_chiro_data_from_mol, convert_target_for_task, Molecule3DEmbedder
 from graphgps.dataset.utils import get_number_of_chiral_centers
 
 
