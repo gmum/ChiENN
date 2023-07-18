@@ -1,6 +1,6 @@
 # ChiENN: Embracing Molecular Chirality with Graph Neural Networks
 
-This repository contains the code for the paper [ChiENN: Embracing Molecular Chirality with Graph Neural Networks]() by Piotr Gaiński, Michał Koziarski, Jacek Tabor, Marek Śmieja. The repository contains two modules:
+This repository contains the code for the paper [ChiENN: Embracing Molecular Chirality with Graph Neural Networks](https://arxiv.org/abs/2307.02198) by Piotr Gaiński, Michał Koziarski, Jacek Tabor, Marek Śmieja. The repository contains two modules:
 - `chienn` that implements `ChiENNLayer` and `ChiENNModel` along with data pre-processing functions.
 - `experiments` that contains the code for reproducing experiments from the paper.
 
@@ -92,7 +92,7 @@ assert output[0] != output[1]
 If you find this work useful, please cite our paper:
 ```bibtex
 @article{chienn,
-  title={{ChiENN: Embracing Molecular Chirality with Graph Neural Networks}}, 
+  title={{ChiENN: Embracing Molecular Chirality with Graph Neural Networks}},
   author={Gai{\'n}ski, Piotr and Koziarski, Micha{\l} and Tabor, Jacek and {\'S}mieja, Marek},
   journal={arXiv preprint arXiv:2307.02198},
   year={2023}
